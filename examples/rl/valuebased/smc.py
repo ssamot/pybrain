@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-__author__ = 'Thomas Rueckstiess, ruecksti@in.tum.de'
+__author__ = 'Spyridon Samothrakis, spyridon.samothrakis@gmail.com'
 
-""" This example demonstrates how to use the discrete Temporal Difference
-Reinforcement Learning algorithms (SARSA, Q, Q(lambda)) in a classical
-fully observable MDP maze task. The goal point is the top right free
-field. """
+""" This example demonstrates how to use the supervisedmc module. The module
+    learns a value function in using supervised learning (regression trees in this case), showcasing the
+    relationship between MC control and supervised learning. 
+
+ """
 
 from scipy import * #@UnusedWildImport
 import pylab
@@ -36,16 +37,9 @@ task = MDPMazeTask(env)
 n_actions = 4
 learner = SupervisedMC(n_actions, [0], [80])
 cmw = CLFModuleWrapper(clf(min_samples_split = 1),1,n_actions,"DecisionTreeRegressor")
-# standard exploration is e-greedy, but a different type can be chosen as well
-# learner.explorer = BoltzmannExplorer()
 
-# create agent
 agent = LearningAgent(cmw, learner)
 
-
-
-
-# create experiment
 experiment = Experiment(task, agent)
 
 # prepare plotting
