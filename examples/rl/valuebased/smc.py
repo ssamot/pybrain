@@ -8,12 +8,12 @@ field. """
 
 from scipy import * #@UnusedWildImport
 import pylab
-import numpy as np
+
 from pybrain.rl.environments.mazes import Maze, MDPMazeTask
-from pybrain.rl.learners.valuebased import ActionValueTable
+from pybrain.rl.learners.valuebased.supervisedmc import SupervisedMC, CLFModuleWrapper
+from sklearn.tree import DecisionTreeRegressor as clf
 from pybrain.rl.agents import LearningAgent
-from pybrain.rl.learners import Q, QLambda, SARSA #@UnusedImport
-from pybrain.rl.explorers import BoltzmannExplorer #@UnusedImport
+import numpy as np
 from pybrain.rl.experiments import Experiment
 
 
@@ -33,19 +33,17 @@ env = Maze(envmatrix, (7, 7))
 
 # create task
 task = MDPMazeTask(env)
-
-# create value table and initialize with ones
-table = ActionValueTable(81, 4)
-table.initialize(0.)
-
-# create agent with controller and learner - use SARSA(), Q() or QLambda() here
-learner = SARSA()
-
+n_actions = 4
+learner = SupervisedMC(n_actions, [0], [80])
+cmw = CLFModuleWrapper(clf(min_samples_split = 1),1,n_actions,"DecisionTreeRegressor")
 # standard exploration is e-greedy, but a different type can be chosen as well
 # learner.explorer = BoltzmannExplorer()
 
 # create agent
-agent = LearningAgent(table, learner)
+agent = LearningAgent(cmw, learner)
+
+
+
 
 # create experiment
 experiment = Experiment(task, agent)
@@ -62,8 +60,10 @@ for i in range(1000):
     agent.reset()
 
     # and draw the table
-    values = table.params.reshape(81,4).max(1).reshape(9,9)
-    
+    values = [learner.module.clf.predict([i,j])[0] for i in xrange(0,81) for j in xrange(n_actions)]
+    values = np.array(values)
+    values = values.reshape(81,4).max(1).reshape(9,9)
+   
     values[7,7] = values.max() +0.1
     #values[values >= 1] = 1
     pylab.pcolormesh(values,edgecolor = "red")
